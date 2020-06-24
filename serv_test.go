@@ -22,4 +22,6 @@ func TestPath(t *testing.T) {
 	tF("/test/", []string{"/", "test"})
 	tF("/test+test/", []string{"/", "test+test"})
 	tF("/hello/world", []string{"/", "hello", "world"})
+	tF("/hello/:login/", []string{"/", "hello", ":login"})
+	tF("/posts/*", []string{"/", "posts", "*"})
 }
