@@ -1,7 +1,6 @@
 package serv
 
 import (
-	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -33,7 +32,7 @@ type serv struct {
 
 var (
 	rt         *serv
-	errorCodes map[int]string
+	errorCodes map[int][]byte
 )
 
 func init() {
@@ -41,24 +40,24 @@ func init() {
 	rt = &serv{
 		methods:           make(map[string]*node),
 		redirects:         make(map[string]string),
-		notFoundFunc:      func(rw http.ResponseWriter, req *http.Request) { SendErrorCode(rw, 404) },
-		badRequestFunc:    func(rw http.ResponseWriter, req *http.Request) { SendErrorCode(rw, 400) },
-		internalErrorFunc: func(rw http.ResponseWriter, req *http.Request) { SendErrorCode(rw, 500) },
+		notFoundFunc:      func(rw http.ResponseWriter, req *http.Request) { SendError(rw, 404) },
+		badRequestFunc:    func(rw http.ResponseWriter, req *http.Request) { SendError(rw, 400) },
+		internalErrorFunc: func(rw http.ResponseWriter, req *http.Request) { SendError(rw, 500) },
 	}
 
-	errorCodes = map[int]string{
-		400: "400 Bad Request",
-		401: "401 Unauthorized",
-		403: "403 Forbidden",
-		404: "404 Status Not Found",
-		405: "405 Method Not Allowed",
-		409: "409 Conflict",
-		429: "429 Too Many Requests",
-		500: "500 Internal Server Error",
+	errorCodes = map[int][]byte{
+		400: []byte("400 Bad Request"),
+		401: []byte("401 Unauthorized"),
+		403: []byte("403 Forbidden"),
+		404: []byte("404 Status Not Found"),
+		405: []byte("405 Method Not Allowed"),
+		409: []byte("409 Conflict"),
+		429: []byte("429 Too Many Requests"),
+		500: []byte("500 Internal Server Error"),
 	}
 }
 
-func SendErrorCode(rw http.ResponseWriter, code int) {
+func SendError(rw http.ResponseWriter, code int) {
 
 	_, h := errorCodes[code]
 
@@ -69,7 +68,7 @@ func SendErrorCode(rw http.ResponseWriter, code int) {
 	m, _ := errorCodes[code]
 
 	rw.WriteHeader(code)
-	fmt.Fprint(rw, m)
+	rw.Write([]byte(m))
 }
 
 func Register(method string, path string, fn Handler) {
