@@ -145,3 +145,89 @@ func path2list(path string) []string {
 
 	return list
 }
+
+func (r *serv) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+
+	if req.Method == http.MethodGet {
+
+		if dest, has := r.redirects[req.URL.Path]; has {
+			http.Redirect(rw, req, dest, 302)
+			return
+		}
+	}
+
+	defer func() {
+
+		if re := recover(); re != nil {
+			r.internalErrorFunc(rw, req)
+		}
+
+	}()
+
+	if req.Method == http.MethodOptions && r.optionsFunc != nil {
+		r.optionsFunc(rw, req)
+		return
+	}
+
+	root, has := r.methods[req.Method]
+	if !has {
+		r.notFoundFunc(rw, req)
+		return
+	}
+
+	paths := path2list(req.URL.Path)
+	if len(paths) == 0 {
+		r.badRequestFunc(rw, req)
+		return
+	}
+
+	tail := ""
+	params := make(map[string]string)
+
+	for _, item := range paths {
+
+		if root.wildCard {
+			tail += "/" + item
+			continue
+		}
+
+		if n, h := root.childs[""]; h {
+			root = n
+			if root.wildCard {
+				tail = "/" + item
+			} else {
+				params[root.name] = item
+			}
+			continue
+		}
+
+		if n, h := root.childs[item]; h {
+			root = n
+			continue
+		}
+
+		r.notFoundFunc(rw, req)
+		return
+	}
+
+	if root.wildCard {
+		params["*"] = tail
+	}
+
+	if root.fn != nil {
+
+		ctx := &Context{
+			RW:      rw,
+			Request: req,
+			params:  params,
+		}
+
+		root.fn(ctx)
+	} else {
+		r.notFoundFunc(rw, req)
+	}
+}
+
+func Start(addr string) error {
+	return http.ListenAndServe(addr, rt)
+}
