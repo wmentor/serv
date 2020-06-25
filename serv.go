@@ -4,6 +4,9 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
+
+	"github.com/wmentor/uniq"
 )
 
 type Context struct {
@@ -24,6 +27,7 @@ type node struct {
 type serv struct {
 	methods           map[string]*node
 	redirects         map[string]string
+	needUid           bool
 	notFoundFunc      http.HandlerFunc
 	badRequestFunc    http.HandlerFunc
 	internalErrorFunc http.HandlerFunc
@@ -148,6 +152,10 @@ func path2list(path string) []string {
 
 func (r *serv) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
+	if r.needUid {
+		makeUid(rw, req)
+	}
+
 	if req.Method == http.MethodGet {
 
 		if dest, has := r.redirects[req.URL.Path]; has {
@@ -228,6 +236,35 @@ func (r *serv) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func makeUid(rw http.ResponseWriter, req *http.Request) {
+
+	c, err := req.Cookie("uid")
+
+	v := ""
+
+	if err != nil {
+		v = uniq.New()
+	} else {
+		v = c.Value
+	}
+
+	cookie := &http.Cookie{
+		Name:     "uid",
+		Value:    v,
+		Path:     "/",
+		HttpOnly: true,
+		Expires:  time.Unix(time.Now().Unix()+86400*366, 0),
+	}
+
+	req.AddCookie(cookie)
+
+	http.SetCookie(rw, cookie)
+}
+
 func Start(addr string) error {
 	return http.ListenAndServe(addr, rt)
+}
+
+func SetUID(enable bool) {
+	rt.needUid = enable
 }
