@@ -1,11 +1,14 @@
 package serv
 
 import (
+	"errors"
 	"net/http"
 )
 
 var (
 	errorCodes map[int][]byte
+
+	errorInvalidRequestMethod error = errors.New("invalid request method")
 )
 
 func init() {

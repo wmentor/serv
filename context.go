@@ -27,6 +27,10 @@ func (c *Context) WriteJson(v interface{}) {
 	}
 }
 
+func (c *Context) WriteRedirect(dest string) {
+	http.Redirect(c.rw, c.req, dest, 302)
+}
+
 func (c *Context) WriteHeader(code int) {
 	c.rw.WriteHeader(code)
 }
@@ -147,5 +151,24 @@ func (c *Context) BodyJson(res interface{}) error {
 		return decoder.Decode(res)
 	}
 
-	return errors.New("invalid request method")
+	return errorInvalidRequestMethod
+}
+
+func (c *Context) BasicAuth() (string, string, bool) {
+	return c.req.BasicAuth()
+}
+
+func (c *Context) Cookie(name string) string {
+	cookie, err := c.req.Cookie(name)
+	if err != nil {
+		return ""
+	}
+
+	return cookie.Value
+}
+
+func (c *Context) SetCookie(cookie *http.Cookie) {
+	if cookie != nil {
+		http.SetCookie(c.rw, cookie)
+	}
 }
