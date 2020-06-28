@@ -1,11 +1,13 @@
 package serv
 
 import (
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
 
+	"github.com/wmentor/jrpc"
 	"github.com/wmentor/uniq"
 )
 
@@ -89,6 +91,31 @@ func Register(method string, path string, fn Handler) {
 	}
 
 	root.fn = fn
+}
+
+func RegMethod(method string, fn interface{}) {
+	jrpc.RegMethod(method, fn)
+}
+
+func RegisterJsonRPC(url string) {
+
+	Register("POST", url, func(c *Context) {
+
+		data, err := ioutil.ReadAll(c.Body())
+		if err != nil {
+			SendError(c.rw, 500)
+		}
+
+		if data, err = jrpc.Handle(data); err != nil {
+			SendError(c.rw, 400)
+		}
+
+		c.SetContentType("application/json; charset=utf-8")
+		c.WriteHeader(200)
+		c.Write(data)
+
+	})
+
 }
 
 func path2list(path string) []string {

@@ -1,2 +1,6 @@
+github.com/wmentor/jrpc v0.0.0-20200615202422-7faf08293868 h1:8WfjQpw6Y6RJu1cy0rT5dBc4x7VfRLaXb+axMFOccVc=
+github.com/wmentor/jrpc v0.0.0-20200615202422-7faf08293868/go.mod h1:u56wAC8JtFs2we+NSvoQ66oAhU0fNQ0tmn8EAftO/1k=
+github.com/wmentor/jrpc v1.0.0 h1:PYcSiVlMYpI+uPrRQJ1BbPSeCgyP78Gqab+3hxc27ec=
+github.com/wmentor/jrpc v1.0.0/go.mod h1:u56wAC8JtFs2we+NSvoQ66oAhU0fNQ0tmn8EAftO/1k=
 github.com/wmentor/uniq v1.0.0 h1:h4//Rt/C6+SOQn5HhURRvJFeBUPzglip996sG8ln6y8=
 github.com/wmentor/uniq v1.0.0/go.mod h1:v7DrXGBZ/eKhNMvgKOOB93NIVaJnIy8ESYYg3+4/Qgg=
