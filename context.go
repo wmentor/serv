@@ -27,6 +27,10 @@ func (c *Context) WriteJson(v interface{}) {
 	}
 }
 
+func (c *Context) WriteString(txt string) {
+	c.rw.Write([]byte(txt))
+}
+
 func (c *Context) WriteRedirect(dest string) {
 	http.Redirect(c.rw, c.req, dest, 302)
 }
