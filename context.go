@@ -1,6 +1,9 @@
 package serv
 
 import (
+	"encoding/json"
+	"errors"
+	"io"
 	"net/http"
 	"strconv"
 )
@@ -14,6 +17,14 @@ type Context struct {
 
 func (c *Context) Write(data []byte) {
 	c.rw.Write(data)
+}
+
+func (c *Context) WriteJson(v interface{}) {
+
+	encoder := json.NewEncoder(c.rw)
+	if err := encoder.Encode(v); err != nil {
+		SendError(c.rw, 500)
+	}
 }
 
 func (c *Context) WriteHeader(code int) {
@@ -113,4 +124,28 @@ func (c *Context) FormValueFloat(name string) float64 {
 		return res
 	}
 	return 0
+}
+
+func (c *Context) Method() string {
+	return c.req.Method
+}
+
+func (c *Context) Body() io.ReadCloser {
+	return c.req.Body
+}
+
+func (c *Context) BodyJson(res interface{}) error {
+
+	if c.req.Body == nil {
+		return errors.New("empty body")
+	}
+
+	m := c.Method()
+
+	if m == "POST" || m == "PUT" {
+		decoder := json.NewDecoder(c.Body())
+		return decoder.Decode(res)
+	}
+
+	return errors.New("invalid request method")
 }
