@@ -6,6 +6,8 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+
+	"github.com/wmentor/tt"
 )
 
 type Context struct {
@@ -175,4 +177,20 @@ func (c *Context) SetCookie(cookie *http.Cookie) {
 	if cookie != nil {
 		http.SetCookie(c.rw, cookie)
 	}
+}
+
+func (c *Context) Render(tmpl string, vars map[string]interface{}) {
+
+	v := tt.MakeVars()
+
+	for k, val := range vars {
+		v.Set(k, val)
+	}
+
+	res, err := tt.Render(tmpl, v)
+
+	if err == nil {
+		c.Write(res)
+	}
+
 }

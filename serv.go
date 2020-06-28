@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/wmentor/jrpc"
+	"github.com/wmentor/tt"
 	"github.com/wmentor/uniq"
 )
 
@@ -262,4 +263,8 @@ func Start(addr string) error {
 
 func SetUID(enable bool) {
 	rt.needUid = enable
+}
+
+func LoadTemplates(dir string) {
+	tt.Open(dir)
 }
