@@ -192,5 +192,19 @@ func (c *Context) Render(tmpl string, vars map[string]interface{}) {
 	if err == nil {
 		c.Write(res)
 	}
+}
 
+func (c *Context) RenderStr(tmpl string, vars map[string]interface{}) {
+
+	v := tt.MakeVars()
+
+	for k, val := range vars {
+		v.Set(k, val)
+	}
+
+	res, err := tt.RenderString(tmpl, v)
+
+	if err == nil {
+		c.Write(res)
+	}
 }
