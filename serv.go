@@ -1,7 +1,6 @@
 package serv
 
 import (
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -102,18 +101,14 @@ func RegisterJsonRPC(url string) {
 
 	Register("POST", url, func(c *Context) {
 
-		data, err := ioutil.ReadAll(c.Body())
-		if err != nil {
-			SendError(c.rw, 500)
-		}
+		if data, err := jrpc.Process(c.Body()); err == nil {
+			c.SetContentType("application/json; charset=utf-8")
+			c.WriteHeader(200)
+			c.Write(data)
 
-		if data, err = jrpc.Handle(data); err != nil {
+		} else {
 			SendError(c.rw, 400)
 		}
-
-		c.SetContentType("application/json; charset=utf-8")
-		c.WriteHeader(200)
-		c.Write(data)
 
 	})
 
