@@ -11,10 +11,11 @@ import (
 )
 
 type Context struct {
-	rw     http.ResponseWriter
-	req    *http.Request
-	params Params
-	qw     Query
+	rw         http.ResponseWriter
+	req        *http.Request
+	params     Params
+	qw         Query
+	statusCode int
 }
 
 func (c *Context) Write(data []byte) {
@@ -38,6 +39,7 @@ func (c *Context) WriteRedirect(dest string) {
 }
 
 func (c *Context) WriteHeader(code int) {
+	c.statusCode = code
 	c.rw.WriteHeader(code)
 }
 
