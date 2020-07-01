@@ -24,10 +24,10 @@ type serv struct {
 	methods           map[string]*node
 	redirects         map[string]string
 	needUid           bool
-	notFoundFunc      http.HandlerFunc
-	badRequestFunc    http.HandlerFunc
-	internalErrorFunc http.HandlerFunc
-	optionsFunc       http.HandlerFunc
+	notFoundFunc      Handler
+	badRequestFunc    Handler
+	internalErrorFunc Handler
+	optionsFunc       Handler
 }
 
 var (
@@ -39,9 +39,9 @@ func init() {
 	rt = &serv{
 		methods:           make(map[string]*node),
 		redirects:         make(map[string]string),
-		notFoundFunc:      func(rw http.ResponseWriter, req *http.Request) { SendError(rw, 404) },
-		badRequestFunc:    func(rw http.ResponseWriter, req *http.Request) { SendError(rw, 400) },
-		internalErrorFunc: func(rw http.ResponseWriter, req *http.Request) { SendError(rw, 500) },
+		notFoundFunc:      func(c *Context) { c.StandardError(404) },
+		badRequestFunc:    func(c *Context) { c.StandardError(400) },
+		internalErrorFunc: func(c *Context) { c.StandardError(500) },
 	}
 }
 
@@ -107,7 +107,7 @@ func RegisterJsonRPC(url string) {
 			c.Write(data)
 
 		} else {
-			SendError(c.rw, 400)
+			c.StandardError(400)
 		}
 
 	})
@@ -143,40 +143,44 @@ func path2list(path string) []string {
 
 func (r *serv) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
+	ctx := &Context{
+		rw:     rw,
+		req:    req,
+		params: make(map[string]string),
+	}
+
 	if r.needUid {
 		makeUid(rw, req)
 	}
 
 	if req.Method == http.MethodGet {
-
 		if dest, has := r.redirects[req.URL.Path]; has {
-			http.Redirect(rw, req, dest, 302)
+			ctx.WriteRedirect(dest)
 			return
 		}
 	}
 
 	defer func() {
-
 		if re := recover(); re != nil {
-			r.internalErrorFunc(rw, req)
+			r.internalErrorFunc(ctx)
 		}
 
 	}()
 
 	if req.Method == http.MethodOptions && r.optionsFunc != nil {
-		r.optionsFunc(rw, req)
+		r.optionsFunc(ctx)
 		return
 	}
 
 	root, has := r.methods[req.Method]
 	if !has {
-		r.notFoundFunc(rw, req)
+		r.notFoundFunc(ctx)
 		return
 	}
 
 	paths := path2list(req.URL.Path)
 	if len(paths) == 0 {
-		r.badRequestFunc(rw, req)
+		r.badRequestFunc(ctx)
 		return
 	}
 
@@ -205,7 +209,7 @@ func (r *serv) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			continue
 		}
 
-		r.notFoundFunc(rw, req)
+		r.notFoundFunc(ctx)
 		return
 	}
 
@@ -214,16 +218,10 @@ func (r *serv) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	if root.fn != nil {
-
-		ctx := &Context{
-			rw:     rw,
-			req:    req,
-			params: params,
-		}
-
+		ctx.params = params
 		root.fn(ctx)
 	} else {
-		r.notFoundFunc(rw, req)
+		r.notFoundFunc(ctx)
 	}
 }
 

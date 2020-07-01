@@ -2,7 +2,6 @@ package serv
 
 import (
 	"errors"
-	"net/http"
 )
 
 var (
@@ -24,18 +23,4 @@ func init() {
 		500: []byte("500 Internal Server Error"),
 	}
 
-}
-
-func SendError(rw http.ResponseWriter, code int) {
-
-	_, h := errorCodes[code]
-
-	if !h {
-		code = 500
-	}
-
-	m, _ := errorCodes[code]
-
-	rw.WriteHeader(code)
-	rw.Write([]byte(m))
 }

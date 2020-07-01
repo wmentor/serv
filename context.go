@@ -18,6 +18,20 @@ type Context struct {
 	statusCode int
 }
 
+func (c *Context) StandardError(code int) {
+	_, h := errorCodes[code]
+
+	if !h {
+		code = 500
+	}
+
+	m, _ := errorCodes[code]
+
+	c.SetContentType("text/plain; charset=utf-8")
+	c.WriteHeader(code)
+	c.Write([]byte(m))
+}
+
 func (c *Context) Write(data []byte) {
 	c.rw.Write(data)
 }
@@ -26,7 +40,7 @@ func (c *Context) WriteJson(v interface{}) {
 
 	encoder := json.NewEncoder(c.rw)
 	if err := encoder.Encode(v); err != nil {
-		SendError(c.rw, 500)
+		c.StandardError(500)
 	}
 }
 
@@ -35,6 +49,7 @@ func (c *Context) WriteString(txt string) {
 }
 
 func (c *Context) WriteRedirect(dest string) {
+	c.statusCode = 302
 	http.Redirect(c.rw, c.req, dest, 302)
 }
 
