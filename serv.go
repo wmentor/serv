@@ -45,6 +45,14 @@ func init() {
 	}
 }
 
+func (sr *serv) optionsOrNotFound(c *Context) {
+	if sr.optionsFunc != nil && c.Method() == "OPTIONS" {
+		sr.optionsFunc(c)
+	} else {
+		sr.notFoundFunc(c)
+	}
+}
+
 func Register(method string, path string, fn Handler) {
 
 	root, has := rt.methods[method]
@@ -167,14 +175,9 @@ func (r *serv) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	}()
 
-	if req.Method == http.MethodOptions && r.optionsFunc != nil {
-		r.optionsFunc(ctx)
-		return
-	}
-
 	root, has := r.methods[req.Method]
 	if !has {
-		r.notFoundFunc(ctx)
+		r.optionsOrNotFound(ctx)
 		return
 	}
 
@@ -209,7 +212,7 @@ func (r *serv) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			continue
 		}
 
-		r.notFoundFunc(ctx)
+		r.optionsOrNotFound(ctx)
 		return
 	}
 
@@ -221,7 +224,7 @@ func (r *serv) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		ctx.params = params
 		root.fn(ctx)
 	} else {
-		r.notFoundFunc(ctx)
+		r.optionsOrNotFound(ctx)
 	}
 }
 
