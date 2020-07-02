@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"net"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/wmentor/tt"
 )
@@ -224,4 +226,29 @@ func (c *Context) RenderStr(tmpl string, vars map[string]interface{}) {
 	if err == nil {
 		c.Write(res)
 	}
+}
+
+func (c *Context) RemoteAddr() string {
+
+	if v := c.GetHeader("X-Forwarded-For"); len(v) > 0 {
+		addrs := strings.Split(v, ",")
+		if addrs != nil && len(addrs) > 0 {
+			ip := strings.TrimSpace(addrs[0])
+			if len(ip) < 20 {
+				return ip
+			}
+		}
+	}
+
+	if ip := c.GetHeader("X-Real-Ip"); len(ip) > 0 && len(ip) < 20 {
+		return ip
+	}
+
+	if ip, _, err := net.SplitHostPort(c.req.RemoteAddr); err == nil {
+		if len(ip) < 20 {
+			return (ip)
+		}
+	}
+
+	return ""
 }

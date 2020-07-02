@@ -181,6 +181,7 @@ func (r *serv) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 			ld := &LogData{
 				Method:     ctx.Method(),
+				Addr:       ctx.RemoteAddr(),
 				Auth:       "-",
 				RequestURL: ctx.req.RequestURI,
 				StatusCode: ctx.statusCode,
