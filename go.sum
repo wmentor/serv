@@ -4,6 +4,8 @@ github.com/CloudyKit/jet v2.1.2+incompatible h1:ybZoYzMBdoijK6I+Ke3vg9GZsmlKo/Zh
 github.com/CloudyKit/jet v2.1.2+incompatible/go.mod h1:HPYO+50pSWkPoj9Q/eq0aRGByCL6ScRlUmiEX5Zgm+w=
 github.com/wmentor/jrpc v1.0.2 h1:HHgG0d8ZW8cmjbiUWBvg+i2C6phphY0QQLD5JHyh6gM=
 github.com/wmentor/jrpc v1.0.2/go.mod h1:u56wAC8JtFs2we+NSvoQ66oAhU0fNQ0tmn8EAftO/1k=
+github.com/wmentor/latency v1.0.0 h1:G+JZVaRG6qW2Lzgv5Y9T1aiFETEqiQEYXuTSWvh2hZ8=
+github.com/wmentor/latency v1.0.0/go.mod h1:WLQCiWrolPQZPot5HRFE5kMaanoOlOfbJraUyHePPCg=
 github.com/wmentor/tt v1.0.0 h1:TaVIwklNHxCJf6ZGdGFBMMed2VCMp33D3tlm3TzSB5k=
 github.com/wmentor/tt v1.0.0/go.mod h1:UInfmaL3BqW7CqBKvLHVwinfsM2HuII9iCaiwakkCPU=
 github.com/wmentor/uniq v1.0.0 h1:h4//Rt/C6+SOQn5HhURRvJFeBUPzglip996sG8ln6y8=

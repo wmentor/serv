@@ -7,11 +7,26 @@ import (
 	"time"
 
 	"github.com/wmentor/jrpc"
+	"github.com/wmentor/latency"
 	"github.com/wmentor/tt"
 	"github.com/wmentor/uniq"
 )
 
 type Handler func(c *Context)
+
+type LogData struct {
+	Method     string
+	Addr       string
+	Auth       string
+	RequestURL string
+	StatusCode int
+	Seconds    float64
+	Referer    string
+	UserAgent  string
+	UID        string
+}
+
+type Logger func(*LogData)
 
 type node struct {
 	name     string
@@ -28,6 +43,7 @@ type serv struct {
 	badRequestFunc    Handler
 	internalErrorFunc Handler
 	optionsFunc       Handler
+	logger            Logger
 }
 
 var (
@@ -151,11 +167,38 @@ func path2list(path string) []string {
 
 func (r *serv) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
+	workTime := latency.New()
+
 	ctx := &Context{
 		rw:     rw,
 		req:    req,
 		params: make(map[string]string),
 	}
+
+	defer func() {
+
+		if rt.logger != nil {
+
+			ld := &LogData{
+				Method:     ctx.Method(),
+				Auth:       "-",
+				RequestURL: ctx.req.RequestURI,
+				StatusCode: ctx.statusCode,
+				Referer:    ctx.GetHeader("User-Agent"),
+				UserAgent:  ctx.GetHeader("Referer"),
+				UID:        ctx.Cookie("uid"),
+			}
+
+			if user, _, ok := ctx.BasicAuth(); ok {
+				ld.Auth = user
+			}
+
+			ld.Seconds = workTime.Seconds()
+
+			rt.logger(ld)
+		}
+
+	}()
 
 	if r.needUid {
 		makeUid(rw, req)
@@ -263,4 +306,8 @@ func SetUID(enable bool) {
 
 func LoadTemplates(dir string) {
 	tt.Open(dir)
+}
+
+func SetLogger(l Logger) {
+	rt.logger = l
 }
