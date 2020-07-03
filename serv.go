@@ -13,6 +13,7 @@ import (
 )
 
 type Handler func(c *Context)
+type LongQueryHandler func(delta time.Duration, c *Context)
 
 type LogData struct {
 	Method     string
@@ -44,6 +45,8 @@ type serv struct {
 	internalErrorFunc Handler
 	optionsFunc       Handler
 	logger            Logger
+	longQueryDuration time.Duration
+	longQueryHandler  LongQueryHandler
 }
 
 var (
@@ -199,6 +202,10 @@ func (r *serv) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			rt.logger(ld)
 		}
 
+		if rt.longQueryHandler != nil && rt.longQueryDuration < workTime.Duration() {
+			rt.longQueryHandler(workTime.Duration(), ctx)
+		}
+
 	}()
 
 	if r.needUid {
@@ -311,4 +318,9 @@ func LoadTemplates(dir string) {
 
 func SetLogger(l Logger) {
 	rt.logger = l
+}
+
+func SetLongQueryHandler(delta time.Duration, fn LongQueryHandler) {
+	rt.longQueryDuration = delta
+	rt.longQueryHandler = fn
 }
