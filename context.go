@@ -51,13 +51,17 @@ func (c *Context) WriteString(txt string) {
 }
 
 func (c *Context) WriteRedirect(dest string) {
-	c.statusCode = 302
-	http.Redirect(c.rw, c.req, dest, 302)
+	if c.statusCode == 0 {
+		c.statusCode = 302
+		http.Redirect(c.rw, c.req, dest, 302)
+	}
 }
 
 func (c *Context) WriteHeader(code int) {
-	c.statusCode = code
-	c.rw.WriteHeader(code)
+	if c.statusCode == 0 {
+		c.statusCode = code
+		c.rw.WriteHeader(code)
+	}
 }
 
 func (c *Context) SetHeader(key, value string) {
