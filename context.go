@@ -210,10 +210,12 @@ func (c *Context) Render(tmpl string, vars map[string]interface{}) {
 		v.Set(k, val)
 	}
 
-	res, err := tt.Render(tmpl, v)
-
-	if err == nil {
+	if res, err := tt.Render(tmpl, v); err == nil {
 		c.Write(res)
+	} else {
+		if rt.errorHandler != nil {
+			rt.errorHandler(err)
+		}
 	}
 }
 
@@ -225,10 +227,12 @@ func (c *Context) RenderStr(tmpl string, vars map[string]interface{}) {
 		v.Set(k, val)
 	}
 
-	res, err := tt.RenderString(tmpl, v)
-
-	if err == nil {
+	if res, err := tt.RenderString(tmpl, v); err == nil {
 		c.Write(res)
+	} else {
+		if rt.errorHandler != nil {
+			rt.errorHandler(err)
+		}
 	}
 }
 

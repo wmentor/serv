@@ -1,6 +1,8 @@
 package serv
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -14,6 +16,7 @@ import (
 
 type Handler func(c *Context)
 type LongQueryHandler func(delta time.Duration, c *Context)
+type ErrorHandler func(error)
 
 type LogData struct {
 	Method     string
@@ -47,6 +50,7 @@ type serv struct {
 	logger            Logger
 	longQueryDuration time.Duration
 	longQueryHandler  LongQueryHandler
+	errorHandler      ErrorHandler
 }
 
 var (
@@ -222,6 +226,9 @@ func (r *serv) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	defer func() {
 		if re := recover(); re != nil {
 			r.internalErrorFunc(ctx)
+			if rt.errorHandler != nil {
+				rt.errorHandler(errors.New(fmt.Sprint(re)))
+			}
 		}
 
 	}()
@@ -323,4 +330,8 @@ func SetLogger(l Logger) {
 func SetLongQueryHandler(delta time.Duration, fn LongQueryHandler) {
 	rt.longQueryDuration = delta
 	rt.longQueryHandler = fn
+}
+
+func SetErrorHandler(fn ErrorHandler) {
+	rt.errorHandler = fn
 }
