@@ -260,3 +260,11 @@ func (c *Context) RemoteAddr() string {
 
 	return ""
 }
+
+func (c *Context) RequestPath() string {
+	return c.req.URL.Path
+}
+
+func (c *Context) RequestURI() string {
+	return c.req.RequestURI
+}
