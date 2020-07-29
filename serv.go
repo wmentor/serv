@@ -51,6 +51,7 @@ type serv struct {
 	longQueryDuration time.Duration
 	longQueryHandler  LongQueryHandler
 	errorHandler      ErrorHandler
+	staticHandlers    map[string]http.Handler
 }
 
 var (
@@ -65,6 +66,7 @@ func init() {
 		notFoundFunc:      func(c *Context) { c.StandardError(404) },
 		badRequestFunc:    func(c *Context) { c.StandardError(400) },
 		internalErrorFunc: func(c *Context) { c.StandardError(500) },
+		staticHandlers:    make(map[string]http.Handler),
 	}
 }
 
@@ -124,6 +126,17 @@ func Register(method string, path string, fn Handler) {
 	root.fn = fn
 }
 
+func Static(prefix string, dir string) {
+
+	if !strings.HasSuffix(prefix, "/") && prefix != "" && prefix != "/" {
+		prefix = prefix + "/"
+	}
+
+	handler := http.FileServer(http.Dir(dir))
+
+	rt.staticHandlers[prefix] = handler
+}
+
 func RegMethod(method string, fn interface{}) {
 	jrpc.RegMethod(method, fn)
 }
@@ -173,6 +186,13 @@ func path2list(path string) []string {
 }
 
 func (r *serv) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+
+	for pref, handler := range r.staticHandlers {
+		if strings.HasPrefix(req.URL.Path, pref) {
+			handler.ServeHTTP(rw, req)
+			return
+		}
+	}
 
 	workTime := latency.New()
 
