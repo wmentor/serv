@@ -132,7 +132,7 @@ func Static(prefix string, dir string) {
 		prefix = prefix + "/"
 	}
 
-	handler := http.FileServer(http.Dir(dir))
+	handler := http.StripPrefix(prefix, http.FileServer(http.Dir(dir)))
 
 	rt.staticHandlers[prefix] = handler
 }
