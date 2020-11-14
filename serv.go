@@ -212,8 +212,8 @@ func (r *serv) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 				Auth:       "-",
 				RequestURL: ctx.req.RequestURI,
 				StatusCode: ctx.statusCode,
-				Referer:    ctx.GetHeader("User-Agent"),
-				UserAgent:  ctx.GetHeader("Referer"),
+				Referer:    ctx.GetHeader("Referer"),
+				UserAgent:  ctx.GetHeader("User-Agent"),
 				UID:        ctx.Cookie("uid"),
 			}
 
