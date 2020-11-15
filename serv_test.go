@@ -58,6 +58,8 @@ func TestServ(t *testing.T) {
 		return "Hello, " + name + "!", nil
 	})
 
+	File("/LICENSE", "./LICENSE")
+
 	tG := func(url string, code int, body string) {
 
 		rw := httptest.NewRecorder()
@@ -74,6 +76,7 @@ func TestServ(t *testing.T) {
 		if res.StatusCode == 200 {
 
 			data, _ := ioutil.ReadAll(res.Body)
+
 			if string(data) != body {
 				t.Fatalf("Invalid body for: %s", url)
 			}
@@ -121,6 +124,28 @@ func TestServ(t *testing.T) {
 	tG("/tail/", 404, "404 unknown request")
 	tG("/tail/1", 200, "/1")
 	tG("/tail/1/11/111/", 200, "/1/11/111")
+	tG("/LICENSE", 200, `MIT License
+
+Copyright (c) 2020 Mikhail Kirillov <wmentor@mail.ru>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+`)
 
 	tJRPC("hello", "wmentor", `"result":"Hello, wmentor!"`)
 }

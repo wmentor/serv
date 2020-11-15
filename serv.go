@@ -32,6 +32,14 @@ type LogData struct {
 
 type Logger func(*LogData)
 
+type fileHandler struct {
+	Filename string
+}
+
+func (fh *fileHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	http.ServeFile(rw, req, fh.Filename)
+}
+
 type node struct {
 	name     string
 	childs   map[string]*node
@@ -52,6 +60,7 @@ type serv struct {
 	longQueryHandler  LongQueryHandler
 	errorHandler      ErrorHandler
 	staticHandlers    map[string]http.Handler
+	fileHandlers      map[string]http.Handler
 }
 
 var (
@@ -67,6 +76,7 @@ func init() {
 		badRequestFunc:    func(c *Context) { c.StandardError(400) },
 		internalErrorFunc: func(c *Context) { c.StandardError(500) },
 		staticHandlers:    make(map[string]http.Handler),
+		fileHandlers:      make(map[string]http.Handler),
 	}
 }
 
@@ -137,6 +147,10 @@ func Static(prefix string, dir string) {
 	rt.staticHandlers[prefix] = handler
 }
 
+func File(path string, filename string) {
+	rt.fileHandlers[path] = &fileHandler{Filename: filename}
+}
+
 func RegMethod(method string, fn interface{}) {
 	jrpc.RegMethod(method, fn)
 }
@@ -186,6 +200,11 @@ func path2list(path string) []string {
 }
 
 func (r *serv) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+
+	if handler, has := r.fileHandlers[req.URL.Path]; has {
+		handler.ServeHTTP(rw, req)
+		return
+	}
 
 	for pref, handler := range r.staticHandlers {
 		if strings.HasPrefix(req.URL.Path, pref) {
