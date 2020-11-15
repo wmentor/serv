@@ -17,6 +17,7 @@ import (
 type Handler func(c *Context)
 type LongQueryHandler func(delta time.Duration, c *Context)
 type ErrorHandler func(error)
+type AuthCheck func(user string, passwd string) bool
 
 type LogData struct {
 	Method     string
@@ -61,6 +62,7 @@ type serv struct {
 	errorHandler      ErrorHandler
 	staticHandlers    map[string]http.Handler
 	fileHandlers      map[string]http.Handler
+	authCheck         AuthCheck
 }
 
 var (
@@ -77,6 +79,7 @@ func init() {
 		internalErrorFunc: func(c *Context) { c.StandardError(500) },
 		staticHandlers:    make(map[string]http.Handler),
 		fileHandlers:      make(map[string]http.Handler),
+		authCheck:         func(login string, passwd string) bool { return false },
 	}
 }
 
@@ -86,6 +89,10 @@ func (sr *serv) optionsOrNotFound(c *Context) {
 	} else {
 		sr.notFoundFunc(c)
 	}
+}
+
+func SetAuthCheck(fn AuthCheck) {
+	rt.authCheck = fn
 }
 
 func Register(method string, path string, fn Handler) {
@@ -134,6 +141,24 @@ func Register(method string, path string, fn Handler) {
 	}
 
 	root.fn = fn
+}
+
+func RegisterAuth(method string, path string, fn Handler) {
+
+	Register(method, path, func(c *Context) {
+
+		if user, login, has := c.BasicAuth(); has {
+			if rt.authCheck(user, login) {
+				fn(c)
+				return
+			}
+		}
+
+		c.SetHeader("WWW-Authenticate", `Basic realm="Enter your login and password"`)
+		c.WriteHeader(http.StatusUnauthorized)
+		c.WriteString("Unauthorized.")
+	})
+
 }
 
 func Static(prefix string, dir string) {

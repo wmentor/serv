@@ -52,6 +52,12 @@ func TestServ(t *testing.T) {
 		c.WriteString(c.Param("*"))
 	})
 
+	RegisterAuth("GET", "/auth", func(c *Context) {
+		c.SetContentType("text/plain; charset=utf-8")
+		c.WriteHeader(200)
+		c.WriteString("OK")
+	})
+
 	RegisterJsonRPC("/rpc")
 
 	RegMethod("hello", func(name string) (string, *jrpc.Error) {
@@ -124,6 +130,7 @@ func TestServ(t *testing.T) {
 	tG("/tail/", 404, "404 unknown request")
 	tG("/tail/1", 200, "/1")
 	tG("/tail/1/11/111/", 200, "/1/11/111")
+	tG("/auth", 401, "Auth require.")
 	tG("/LICENSE", 200, `MIT License
 
 Copyright (c) 2020 Mikhail Kirillov <wmentor@mail.ru>
