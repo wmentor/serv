@@ -12,6 +12,11 @@ func newQuery(req *http.Request) Query {
 	return Query(param)
 }
 
+func (p Query) Has(name string) bool {
+	_, has := p[name]
+	return has
+}
+
 func (p Query) GetInt64(name string) int64 {
 	data, has := p[name]
 
