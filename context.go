@@ -127,6 +127,10 @@ func (c *Context) QueryFloat(name string) float64 {
 	return c.query().GetFloat(name)
 }
 
+func (c *Context) HasQueryParam(name string) bool {
+	return c.query().Has(name)
+}
+
 func (c *Context) FormValue(name string) string {
 	return c.req.FormValue(name)
 }
