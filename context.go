@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"mime/multipart"
 	"net"
 	"net/http"
 	"strconv"
@@ -129,6 +130,11 @@ func (c *Context) QueryFloat(name string) float64 {
 
 func (c *Context) HasQueryParam(name string) bool {
 	return c.query().Has(name)
+}
+
+func (c *Context) FormFile(name string) (multipart.File, *multipart.FileHeader, error) {
+	f, fh, err := c.req.FormFile(name)
+	return f, fh, err
 }
 
 func (c *Context) FormValue(name string) string {
