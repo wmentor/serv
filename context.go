@@ -58,6 +58,13 @@ func (c *Context) WriteRedirect(dest string) {
 	}
 }
 
+func (c *Context) WritePermanentRedirect(dest string) {
+	if c.statusCode == 0 {
+		c.statusCode = 301
+		http.Redirect(c.rw, c.req, dest, 301)
+	}
+}
+
 func (c *Context) WriteHeader(code int) {
 	if c.statusCode == 0 {
 		c.statusCode = code
