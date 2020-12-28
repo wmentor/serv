@@ -1,6 +1,7 @@
 package serv
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -66,7 +67,10 @@ type serv struct {
 }
 
 var (
-	rt *serv
+	rt     *serv
+	server *http.Server
+
+	ErrServerAlreadyStarted error = errors.New("server already started")
 )
 
 func init() {
@@ -376,7 +380,28 @@ func makeUid(rw http.ResponseWriter, req *http.Request) {
 }
 
 func Start(addr string) error {
-	return http.ListenAndServe(addr, rt)
+
+	if server == nil {
+		server = &http.Server{Addr: addr, Handler: rt}
+		if err := server.ListenAndServe(); err != http.ErrServerClosed {
+			return err
+		}
+		return nil
+	}
+	return ErrServerAlreadyStarted
+}
+
+func Shutdown() {
+	if server != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+		defer cancel()
+		if err := server.Shutdown(ctx); err != nil {
+			if rt != nil && rt.errorHandler != nil {
+				rt.errorHandler(err)
+			}
+		}
+		server = nil
+	}
 }
 
 func SetUID(enable bool) {
