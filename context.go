@@ -14,11 +14,12 @@ import (
 )
 
 type Context struct {
-	rw         http.ResponseWriter
-	req        *http.Request
-	params     Params
-	qw         Query
-	statusCode int
+	rw           http.ResponseWriter
+	req          *http.Request
+	params       Params
+	qw           Query
+	statusCode   int
+	errorHandler ErrorHandler
 }
 
 func (c *Context) StandardError(code int) {
@@ -230,8 +231,8 @@ func (c *Context) Render(tmpl string, vars map[string]interface{}) {
 	if res, err := tt.Render(tmpl, v); err == nil {
 		c.Write(res)
 	} else {
-		if rt.errorHandler != nil {
-			rt.errorHandler(err)
+		if c.errorHandler != nil {
+			c.errorHandler(err)
 		}
 	}
 }
@@ -247,8 +248,8 @@ func (c *Context) RenderStr(tmpl string, vars map[string]interface{}) {
 	if res, err := tt.RenderString(tmpl, v); err == nil {
 		c.Write(res)
 	} else {
-		if rt.errorHandler != nil {
-			rt.errorHandler(err)
+		if c.errorHandler != nil {
+			c.errorHandler(err)
 		}
 	}
 }
