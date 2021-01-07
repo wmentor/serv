@@ -8,6 +8,8 @@ var (
 	errorCodes map[int][]byte
 
 	errorInvalidRequestMethod error = errors.New("invalid request method")
+
+	ErrServerAlreadyStarted error = errors.New("routerer already started")
 )
 
 func init() {

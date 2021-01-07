@@ -54,8 +54,6 @@ type router struct {
 var (
 	rt       *router
 	routerer *http.Server
-
-	ErrServerAlreadyStarted error = errors.New("routerer already started")
 )
 
 func init() {
