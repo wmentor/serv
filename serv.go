@@ -1,6 +1,7 @@
 package serv
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -188,11 +189,12 @@ func RegisterJsonRPC(url string) {
 
 	Register("POST", url, func(c *Context) {
 
-		if data, err := jrpc.Process(c.Body()); err == nil {
+		out := bytes.NewBuffer(nil)
+
+		if err := jrpc.Process(c.Body(), out); err == nil {
 			c.SetContentType("application/json; charset=utf-8")
 			c.WriteHeader(200)
-			c.Write(data)
-
+			c.Write(out.Bytes())
 		} else {
 			c.StandardError(400)
 		}
