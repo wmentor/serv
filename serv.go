@@ -50,7 +50,7 @@ type node struct {
 	fn       Handler
 }
 
-type serv struct {
+type router struct {
 	methods           map[string]*node
 	redirects         map[string]string
 	needUid           bool
@@ -68,15 +68,15 @@ type serv struct {
 }
 
 var (
-	rt     *serv
-	server *http.Server
+	rt       *router
+	routerer *http.Server
 
-	ErrServerAlreadyStarted error = errors.New("server already started")
+	ErrServerAlreadyStarted error = errors.New("routerer already started")
 )
 
 func init() {
 
-	rt = &serv{
+	rt = &router{
 		methods:           make(map[string]*node),
 		redirects:         make(map[string]string),
 		notFoundFunc:      func(c *Context) { c.StandardError(404) },
@@ -88,7 +88,7 @@ func init() {
 	}
 }
 
-func (sr *serv) optionsOrNotFound(c *Context) {
+func (sr *router) optionsOrNotFound(c *Context) {
 	if sr.optionsFunc != nil && c.Method() == "OPTIONS" {
 		sr.optionsFunc(c)
 	} else {
@@ -230,7 +230,7 @@ func path2list(path string) []string {
 	return list
 }
 
-func (r *serv) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+func (r *router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	if handler, has := r.fileHandlers[req.URL.Path]; has {
 		handler.ServeHTTP(rw, req)
@@ -383,9 +383,9 @@ func makeUid(rw http.ResponseWriter, req *http.Request) {
 
 func Start(addr string) error {
 
-	if server == nil {
-		server = &http.Server{Addr: addr, Handler: rt}
-		if err := server.ListenAndServe(); err != http.ErrServerClosed {
+	if routerer == nil {
+		routerer = &http.Server{Addr: addr, Handler: rt}
+		if err := routerer.ListenAndServe(); err != http.ErrServerClosed {
 			return err
 		}
 		return nil
@@ -394,15 +394,15 @@ func Start(addr string) error {
 }
 
 func Shutdown() {
-	if server != nil {
+	if routerer != nil {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
-		if err := server.Shutdown(ctx); err != nil {
+		if err := routerer.Shutdown(ctx); err != nil {
 			if rt != nil && rt.errorHandler != nil {
 				rt.errorHandler(err)
 			}
 		}
-		server = nil
+		routerer = nil
 	}
 }
 
