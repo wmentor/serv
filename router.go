@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
 
@@ -17,23 +16,8 @@ import (
 )
 
 type Handler func(c *Context)
-type LongQueryHandler func(delta time.Duration, c *Context)
 type ErrorHandler func(error)
 type AuthCheck func(user string, passwd string) bool
-
-type LogData struct {
-	Method     string
-	Addr       string
-	Auth       string
-	RequestURL string
-	StatusCode int
-	Seconds    float64
-	Referer    string
-	UserAgent  string
-	UID        string
-}
-
-type Logger func(*LogData)
 
 type fileHandler struct {
 	Filename string
@@ -201,33 +185,6 @@ func RegisterJsonRPC(url string) {
 
 	})
 
-}
-
-func path2list(path string) []string {
-
-	if len(path) < 1 || path[0] != '/' {
-		return nil
-	}
-
-	list := make([]string, 1, 32)
-
-	list[0] = "/"
-
-	for _, v := range strings.Split(path[1:], "/") {
-		if v != "" {
-			if uri, e := url.PathUnescape(v); e == nil {
-				list = append(list, uri)
-				if uri == "*" {
-					return list
-				}
-			} else {
-				return nil
-			}
-
-		}
-	}
-
-	return list
 }
 
 func (r *router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
