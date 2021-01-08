@@ -3,6 +3,7 @@ package serv
 import (
 	"context"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -52,4 +53,40 @@ func (s *Server) Shutdown() {
 		}
 		s.server = nil
 	}
+}
+
+func (s *Server) SetLongQueryHandler(delta time.Duration, fn LongQueryHandler) {
+	s.router.longQueryDuration = delta
+	s.router.longQueryHandler = fn
+}
+
+func (s *Server) SetErrorHandler(fn ErrorHandler) {
+	s.router.errorHandler = fn
+}
+
+func (s *Server) SetAuthCheck(fn AuthCheck) {
+	s.router.authCheck = fn
+}
+
+func (s *Server) SetUID(enable bool) {
+	s.router.needUid = enable
+}
+
+func (s *Server) SetLogger(l Logger) {
+	s.router.logger = l
+}
+
+func (s *Server) Static(prefix string, dir string) {
+
+	if !strings.HasSuffix(prefix, "/") && prefix != "" && prefix != "/" {
+		prefix = prefix + "/"
+	}
+
+	handler := http.StripPrefix(prefix, http.FileServer(http.Dir(dir)))
+
+	s.router.staticHandlers[prefix] = handler
+}
+
+func (s *Server) File(path string, filename string) {
+	s.router.fileHandlers[path] = &fileHandler{Filename: filename}
 }

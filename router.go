@@ -2,7 +2,6 @@ package serv
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -51,35 +50,12 @@ type router struct {
 	authCheck         AuthCheck
 }
 
-var (
-	rt       *router
-	routerer *http.Server
-)
-
-func init() {
-
-	rt = &router{
-		methods:           make(map[string]*node),
-		redirects:         make(map[string]string),
-		notFoundFunc:      func(c *Context) { c.StandardError(404) },
-		badRequestFunc:    func(c *Context) { c.StandardError(400) },
-		internalErrorFunc: func(c *Context) { c.StandardError(500) },
-		staticHandlers:    make(map[string]http.Handler),
-		fileHandlers:      make(map[string]http.Handler),
-		authCheck:         func(login string, passwd string) bool { return false },
-	}
-}
-
 func (sr *router) optionsOrNotFound(c *Context) {
 	if sr.optionsFunc != nil && c.Method() == "OPTIONS" {
 		sr.optionsFunc(c)
 	} else {
 		sr.notFoundFunc(c)
 	}
-}
-
-func SetAuthCheck(fn AuthCheck) {
-	rt.authCheck = fn
 }
 
 func Register(method string, path string, fn Handler) {
@@ -148,21 +124,6 @@ func RegisterAuth(method string, path string, fn Handler) {
 
 }
 
-func Static(prefix string, dir string) {
-
-	if !strings.HasSuffix(prefix, "/") && prefix != "" && prefix != "/" {
-		prefix = prefix + "/"
-	}
-
-	handler := http.StripPrefix(prefix, http.FileServer(http.Dir(dir)))
-
-	rt.staticHandlers[prefix] = handler
-}
-
-func File(path string, filename string) {
-	rt.fileHandlers[path] = &fileHandler{Filename: filename}
-}
-
 func RegMethod(method string, fn interface{}) {
 	jrpc.RegMethod(method, fn)
 }
@@ -202,14 +163,15 @@ func (r *router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	workTime := latency.New()
 
 	ctx := &Context{
-		rw:     rw,
-		req:    req,
-		params: make(map[string]string),
+		rw:           rw,
+		req:          req,
+		params:       make(map[string]string),
+		errorHandler: r.errorHandler,
 	}
 
 	defer func() {
 
-		if rt.logger != nil {
+		if r.logger != nil {
 
 			ld := &LogData{
 				Method:     ctx.Method(),
@@ -228,11 +190,11 @@ func (r *router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 			ld.Seconds = workTime.Seconds()
 
-			rt.logger(ld)
+			r.logger(ld)
 		}
 
-		if rt.longQueryHandler != nil && rt.longQueryDuration < workTime.Duration() {
-			rt.longQueryHandler(workTime.Duration(), ctx)
+		if r.longQueryHandler != nil && r.longQueryDuration < workTime.Duration() {
+			r.longQueryHandler(workTime.Duration(), ctx)
 		}
 
 	}()
@@ -251,8 +213,8 @@ func (r *router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	defer func() {
 		if re := recover(); re != nil {
 			r.internalErrorFunc(ctx)
-			if rt.errorHandler != nil {
-				rt.errorHandler(errors.New(fmt.Sprint(re)))
+			if r.errorHandler != nil {
+				r.errorHandler(errors.New(fmt.Sprint(re)))
 			}
 		}
 
@@ -336,48 +298,6 @@ func makeUid(rw http.ResponseWriter, req *http.Request) {
 	http.SetCookie(rw, cookie)
 }
 
-func Start(addr string) error {
-
-	if routerer == nil {
-		routerer = &http.Server{Addr: addr, Handler: rt}
-		if err := routerer.ListenAndServe(); err != http.ErrServerClosed {
-			return err
-		}
-		return nil
-	}
-	return ErrServerAlreadyStarted
-}
-
-func Shutdown() {
-	if routerer != nil {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-		defer cancel()
-		if err := routerer.Shutdown(ctx); err != nil {
-			if rt != nil && rt.errorHandler != nil {
-				rt.errorHandler(err)
-			}
-		}
-		routerer = nil
-	}
-}
-
-func SetUID(enable bool) {
-	rt.needUid = enable
-}
-
 func LoadTemplates(dir string) {
 	tt.Open(dir)
-}
-
-func SetLogger(l Logger) {
-	rt.logger = l
-}
-
-func SetLongQueryHandler(delta time.Duration, fn LongQueryHandler) {
-	rt.longQueryDuration = delta
-	rt.longQueryHandler = fn
-}
-
-func SetErrorHandler(fn ErrorHandler) {
-	rt.errorHandler = fn
 }
