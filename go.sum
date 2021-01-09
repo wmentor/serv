@@ -10,5 +10,7 @@ github.com/wmentor/latency v1.0.0 h1:G+JZVaRG6qW2Lzgv5Y9T1aiFETEqiQEYXuTSWvh2hZ8
 github.com/wmentor/latency v1.0.0/go.mod h1:WLQCiWrolPQZPot5HRFE5kMaanoOlOfbJraUyHePPCg=
 github.com/wmentor/tt v1.0.0 h1:TaVIwklNHxCJf6ZGdGFBMMed2VCMp33D3tlm3TzSB5k=
 github.com/wmentor/tt v1.0.0/go.mod h1:UInfmaL3BqW7CqBKvLHVwinfsM2HuII9iCaiwakkCPU=
+github.com/wmentor/tt v1.0.1 h1:1dnRAA9Ru0t+qbcSqKZ3Dv/01PPsJhfvFOzwrhYklkE=
+github.com/wmentor/tt v1.0.1/go.mod h1:UInfmaL3BqW7CqBKvLHVwinfsM2HuII9iCaiwakkCPU=
 github.com/wmentor/uniq v1.0.0 h1:h4//Rt/C6+SOQn5HhURRvJFeBUPzglip996sG8ln6y8=
 github.com/wmentor/uniq v1.0.0/go.mod h1:v7DrXGBZ/eKhNMvgKOOB93NIVaJnIy8ESYYg3+4/Qgg=

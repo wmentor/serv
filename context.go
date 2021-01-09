@@ -14,11 +14,13 @@ import (
 )
 
 type Context struct {
-	rw         http.ResponseWriter
-	req        *http.Request
-	params     Params
-	qw         Query
-	statusCode int
+	rw           http.ResponseWriter
+	req          *http.Request
+	params       Params
+	qw           Query
+	statusCode   int
+	errorHandler ErrorHandler
+	tt           *tt.TT
 }
 
 func (c *Context) StandardError(code int) {
@@ -221,34 +223,34 @@ func (c *Context) SetCookie(cookie *http.Cookie) {
 
 func (c *Context) Render(tmpl string, vars map[string]interface{}) {
 
-	v := tt.MakeVars()
+	v := c.tt.MakeVars()
 
 	for k, val := range vars {
 		v.Set(k, val)
 	}
 
-	if res, err := tt.Render(tmpl, v); err == nil {
+	if res, err := c.tt.Render(tmpl, v); err == nil {
 		c.Write(res)
 	} else {
-		if rt.errorHandler != nil {
-			rt.errorHandler(err)
+		if c.errorHandler != nil {
+			c.errorHandler(err)
 		}
 	}
 }
 
 func (c *Context) RenderStr(tmpl string, vars map[string]interface{}) {
 
-	v := tt.MakeVars()
+	v := c.tt.MakeVars()
 
 	for k, val := range vars {
 		v.Set(k, val)
 	}
 
-	if res, err := tt.RenderString(tmpl, v); err == nil {
+	if res, err := c.tt.RenderString(tmpl, v); err == nil {
 		c.Write(res)
 	} else {
-		if rt.errorHandler != nil {
-			rt.errorHandler(err)
+		if c.errorHandler != nil {
+			c.errorHandler(err)
 		}
 	}
 }
