@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/wmentor/jrpc"
+	"github.com/wmentor/tt"
 )
 
 type Server struct {
@@ -29,6 +30,7 @@ func New() *Server {
 		staticHandlers:    make(map[string]http.Handler),
 		fileHandlers:      make(map[string]http.Handler),
 		authCheck:         func(login string, passwd string) bool { return false },
+		tt:                tt.New(),
 	}
 
 	s.jrpc = jrpc.New()
@@ -182,4 +184,8 @@ func (s *Server) RegisterJsonRPC(url string) {
 
 	})
 
+}
+
+func (s *Server) LoadTemplates(dir string) {
+	s.router.tt = tt.New(dir)
 }

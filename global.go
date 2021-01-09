@@ -63,3 +63,7 @@ func RegMethod(method string, fn interface{}) {
 func RegisterJsonRPC(url string) {
 	server.RegisterJsonRPC(url)
 }
+
+func LoadTemplates(dir string) {
+	server.LoadTemplates(dir)
+}

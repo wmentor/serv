@@ -20,6 +20,7 @@ type Context struct {
 	qw           Query
 	statusCode   int
 	errorHandler ErrorHandler
+	tt           *tt.TT
 }
 
 func (c *Context) StandardError(code int) {
@@ -222,13 +223,13 @@ func (c *Context) SetCookie(cookie *http.Cookie) {
 
 func (c *Context) Render(tmpl string, vars map[string]interface{}) {
 
-	v := tt.MakeVars()
+	v := c.tt.MakeVars()
 
 	for k, val := range vars {
 		v.Set(k, val)
 	}
 
-	if res, err := tt.Render(tmpl, v); err == nil {
+	if res, err := c.tt.Render(tmpl, v); err == nil {
 		c.Write(res)
 	} else {
 		if c.errorHandler != nil {
@@ -239,13 +240,13 @@ func (c *Context) Render(tmpl string, vars map[string]interface{}) {
 
 func (c *Context) RenderStr(tmpl string, vars map[string]interface{}) {
 
-	v := tt.MakeVars()
+	v := c.tt.MakeVars()
 
 	for k, val := range vars {
 		v.Set(k, val)
 	}
 
-	if res, err := tt.RenderString(tmpl, v); err == nil {
+	if res, err := c.tt.RenderString(tmpl, v); err == nil {
 		c.Write(res)
 	} else {
 		if c.errorHandler != nil {

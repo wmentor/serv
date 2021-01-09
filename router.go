@@ -46,6 +46,7 @@ type router struct {
 	staticHandlers    map[string]http.Handler
 	fileHandlers      map[string]http.Handler
 	authCheck         AuthCheck
+	tt                *tt.TT
 }
 
 func (sr *router) optionsOrNotFound(c *Context) {
@@ -77,6 +78,7 @@ func (r *router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		req:          req,
 		params:       make(map[string]string),
 		errorHandler: r.errorHandler,
+		tt:           r.tt,
 	}
 
 	defer func() {
@@ -206,8 +208,4 @@ func makeUid(rw http.ResponseWriter, req *http.Request) {
 	req.AddCookie(cookie)
 
 	http.SetCookie(rw, cookie)
-}
-
-func LoadTemplates(dir string) {
-	tt.Open(dir)
 }
