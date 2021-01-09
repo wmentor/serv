@@ -47,3 +47,19 @@ func Static(prefix string, dir string) {
 func File(path string, filename string) {
 	server.File(path, filename)
 }
+
+func Register(method string, path string, fn Handler) {
+	server.Register(method, path, fn)
+}
+
+func RegisterAuth(method string, path string, fn Handler) {
+	server.RegisterAuth(method, path, fn)
+}
+
+func RegMethod(method string, fn interface{}) {
+	server.RegMethod(method, fn)
+}
+
+func RegisterJsonRPC(url string) {
+	server.RegisterJsonRPC(url)
+}

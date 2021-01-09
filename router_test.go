@@ -50,7 +50,7 @@ func TestServ(t *testing.T) {
 		rw := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", url, nil)
 
-		rt.ServeHTTP(rw, req)
+		server.router.ServeHTTP(rw, req)
 
 		res := rw.Result()
 
@@ -82,7 +82,7 @@ func TestServ(t *testing.T) {
 		rw := httptest.NewRecorder()
 		req := httptest.NewRequest("POST", "/rpc", bytes.NewReader(data))
 
-		rt.ServeHTTP(rw, req)
+		server.router.ServeHTTP(rw, req)
 
 		res := rw.Result()
 

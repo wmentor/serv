@@ -1,15 +1,19 @@
 package serv
 
 import (
+	"bytes"
 	"context"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/wmentor/jrpc"
 )
 
 type Server struct {
 	router *router
 	server *http.Server
+	jrpc   jrpc.JRPC
 }
 
 func New() *Server {
@@ -26,6 +30,8 @@ func New() *Server {
 		fileHandlers:      make(map[string]http.Handler),
 		authCheck:         func(login string, passwd string) bool { return false },
 	}
+
+	s.jrpc = jrpc.New()
 
 	return s
 }
@@ -47,7 +53,7 @@ func (s *Server) Shutdown() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
 		if err := s.server.Shutdown(ctx); err != nil {
-			if rt != nil && s.router.errorHandler != nil {
+			if s.router != nil && s.router.errorHandler != nil {
 				s.router.errorHandler(err)
 			}
 		}
@@ -89,4 +95,91 @@ func (s *Server) Static(prefix string, dir string) {
 
 func (s *Server) File(path string, filename string) {
 	s.router.fileHandlers[path] = &fileHandler{Filename: filename}
+}
+
+func (s *Server) Register(method string, path string, fn Handler) {
+
+	root, has := s.router.methods[method]
+	if !has {
+		root = &node{childs: make(map[string]*node)}
+		s.router.methods[method] = root
+	}
+
+	list := path2list(path)
+	if len(list) == 0 {
+		return
+	}
+
+	for _, item := range list {
+
+		if item[0] == ':' {
+			n, h := root.childs[""]
+			if !h {
+				name := item
+				if len(name) > 1 {
+					name = item[1:]
+				} else {
+					name = ""
+				}
+				n = &node{name: name, wildCard: false, childs: make(map[string]*node)}
+			}
+			root.childs[""] = n
+			root = n
+		} else if item == "*" {
+			_, h := root.childs[""]
+			if !h {
+				root.childs[""] = &node{name: "*", fn: fn, wildCard: true}
+			}
+			return
+		} else {
+
+			n, h := root.childs[item]
+			if !h {
+				n = &node{name: "", wildCard: false, childs: make(map[string]*node)}
+			}
+			root.childs[item] = n
+			root = n
+		}
+	}
+
+	root.fn = fn
+}
+
+func (s *Server) RegisterAuth(method string, path string, fn Handler) {
+
+	s.Register(method, path, func(c *Context) {
+
+		if user, login, has := c.BasicAuth(); has {
+			if s.router.authCheck(user, login) {
+				fn(c)
+				return
+			}
+		}
+
+		c.SetHeader("WWW-Authenticate", `Basic realm="Enter your login and password"`)
+		c.WriteHeader(http.StatusUnauthorized)
+		c.WriteString("Unauthorized.")
+	})
+}
+
+func (s *Server) RegMethod(method string, fn interface{}) {
+	s.jrpc.RegMethod(method, fn)
+}
+
+func (s *Server) RegisterJsonRPC(url string) {
+
+	s.Register("POST", url, func(c *Context) {
+
+		out := bytes.NewBuffer(nil)
+
+		if err := s.jrpc.Process(c.Body(), out); err == nil {
+			c.SetContentType("application/json; charset=utf-8")
+			c.WriteHeader(200)
+			c.Write(out.Bytes())
+		} else {
+			c.StandardError(400)
+		}
+
+	})
+
 }
